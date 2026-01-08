@@ -1,0 +1,378 @@
+[
+  {
+    "dataset_name": "cards_data.csv",
+    "dataset_type": "cards",
+    "total_records": 6146,
+    "total_columns": 13,
+    "timestamp": "2025-12-13 10:54:16",
+    "completeness": {
+      "id": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "client_id": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "card_brand": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "card_type": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "card_number": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "expires": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "cvv": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "has_chip": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "num_cards_issued": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "credit_limit": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "acct_open_date": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "year_pin_last_changed": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "card_on_dark_web": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      }
+    },
+    "uniqueness": {
+      "card_number": {
+        "score": 1.0,
+        "status": "GREEN"
+      },
+      "id": {
+        "score": 1.0,
+        "status": "GREEN"
+      }
+    },
+    "accuracy": {
+      "card_brand": {
+        "score": 1.0,
+        "status": "GREEN"
+      },
+      "cvv": {
+        "score": 0.8996095021151969,
+        "status": "YELLOW"
+      }
+    },
+    "timeliness": {
+      "expired": {
+        "score": 0.6309794988610478,
+        "status": "RED",
+        "expired_count": 2268
+      }
+    },
+    "statistics": {
+      "total_cards": 6146,
+      "brand_distribution": {
+        "Mastercard": 3209,
+        "Visa": 2326,
+        "Amex": 402,
+        "Discover": 209
+      }
+    },
+    "issues": [
+      "617 invalid CVV formats",
+      "2,268 expired cards"
+    ]
+  },
+  {
+    "dataset_name": "users_data.csv",
+    "dataset_type": "users",
+    "total_records": 2000,
+    "total_columns": 14,
+    "timestamp": "2025-12-13 10:54:16",
+    "completeness": {
+      "id": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "current_age": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "retirement_age": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "birth_year": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "birth_month": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "gender": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "address": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "latitude": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "longitude": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "per_capita_income": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "yearly_income": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "total_debt": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "credit_score": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "num_credit_cards": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      }
+    },
+    "uniqueness": {
+      "user_id": {
+        "score": 1.0,
+        "status": "GREEN"
+      },
+      "address": {
+        "score": 0.999,
+        "status": "GREEN"
+      }
+    },
+    "accuracy": {
+      "age": {
+        "score": 0.9995,
+        "status": "GREEN",
+        "invalid_count": 1
+      },
+      "gender": {
+        "score": 1.0,
+        "status": "GREEN",
+        "invalid_count": 0
+      },
+      "credit_score": {
+        "score": 1.0,
+        "status": "GREEN",
+        "invalid_count": 0
+      },
+      "geo_location": {
+        "score": 0.994,
+        "status": "GREEN",
+        "invalid_count": 24
+      }
+    },
+    "consistency": {
+      "retirement_age": {
+        "score": 0.849,
+        "status": "RED",
+        "invalid_count": 302
+      },
+      "birth_year": {
+        "score": 1.0,
+        "status": "GREEN",
+        "invalid_count": 0
+      }
+    },
+    "statistics": {
+      "total_users": 2000,
+      "age_range": "18-101",
+      "avg_credit_score": 709.7345,
+      "avg_yearly_income": 45715.882,
+      "avg_total_debt": 63709.694,
+      "avg_credit_cards": 3.073,
+      "gender_distribution": {
+        "Female": 1016,
+        "Male": 984
+      }
+    },
+    "issues": [
+      "2 duplicate addresses",
+      "1 users with invalid age (not 18-100)",
+      "24 invalid coordinates",
+      "302 users with invalid retirement age"
+    ]
+  },
+  {
+    "dataset_name": "transactions_data.csv",
+    "dataset_type": "transactions",
+    "total_records": 13305915,
+    "total_columns": 12,
+    "timestamp": "2025-12-13 10:54:27",
+    "completeness": {
+      "id": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "date": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "client_id": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "card_id": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "amount": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "use_chip": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "merchant_id": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "merchant_city": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      },
+      "merchant_state": {
+        "score": 0.8824808365302198,
+        "status": "YELLOW",
+        "missing_count": 1563700
+      },
+      "zip": {
+        "score": 0.8757916310152289,
+        "status": "YELLOW",
+        "missing_count": 1652706
+      },
+      "mcc": {
+        "score": 1.0,
+        "status": "GREEN",
+        "missing_count": 0
+      }
+    },
+    "uniqueness": {
+      "transaction_id": {
+        "score": 1.0,
+        "status": "GREEN"
+      }
+    },
+    "accuracy": {
+      "amount": {
+        "score": 1.0,
+        "status": "GREEN",
+        "invalid_count": 0
+      },
+      "use_chip": {
+        "score": 1.0,
+        "status": "GREEN",
+        "invalid_count": 0
+      },
+      "merchant_id": {
+        "score": 1.0,
+        "status": "GREEN",
+        "invalid_count": 0
+      },
+      "merchant_city": {
+        "score": 1.0,
+        "status": "GREEN",
+        "invalid_count": 0
+      },
+      "mcc": {
+        "score": 1.0,
+        "status": "GREEN",
+        "invalid_count": 0
+      }
+    },
+    "consistency": {},
+    "statistics": {
+      "total_transactions": 13305915,
+      "total_amount": 0.0,
+      "avg_transaction": null,
+      "max_transaction": null,
+      "min_transaction": null,
+      "transaction_type_dist": {
+        "Swipe Transaction": 6967185,
+        "Chip Transaction": 4780818,
+        "Online Transaction": 1557912
+      },
+      "top_cities": {
+        "ONLINE": 1563700,
+        "Houston": 146917,
+        "Miami": 87388,
+        "Brooklyn": 84020,
+        "Los Angeles": 82004
+      }
+    },
+    "issues": [
+      "1,563,700 missing values in merchant_state",
+      "1,652,706 missing values in zip"
+    ]
+  }
+]

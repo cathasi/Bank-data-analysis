@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Churn Dashboard - Banking Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            color: #2c3e50;
+            overflow-x: hidden;
+            width: 100%;
+        }
+
+        /* Dashboard */
+        .dashboard {
+            min-height: 100vh;
+            padding: 20px;
+            max-width: 1800px;
+            margin: 0 auto;
+            width: calc(100% - 40px);
+        }
+
+        .top-bar {
+            background: #ffffff;
+            padding: 20px 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #e1e8ed;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .top-bar h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .top-bar-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn-back {
+            padding: 10px 16px;
+            background: #4A90E2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .btn-back:hover {
+            background: #357abd;
+        }
+
+        /* Dashboard Layout */
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 20px;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        /* KPI Sidebar */
+        .kpi-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .kpi-card {
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e1e8ed;
+            transition: all 0.3s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .kpi-card:hover {
+            border-color: #e74c3c;
+            box-shadow: 0 2px 8px rgba(231,76,60,0.15);
+        }
+
+        .kpi-card h3 {
+            font-size: 11px;
+            color: #6c757d;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #e74c3c;
+        }
+
+        .kpi-subtitle {
+            font-size: 10px;
+            color: #6c757d;
+            margin-top: 6px;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            width: 100%;
+            min-width: 0;
+        }
+
+        /* Feature Cards */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            width: 100%;
+        }
+
+        .feature-card {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e1e8ed;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .feature-card h2 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feature-card h2::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: #e74c3c;
+            border-radius: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            max-width: 100%;
+            padding: 10px;
+            border: 2px solid #e1e8ed;
+            border-radius: 4px;
+            font-size: 13px;
+            transition: all 0.3s;
+            background: #ffffff;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #e74c3c;
+            background: white;
+        }
+
+        .btn-predict {
+            width: 100%;
+            padding: 14px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+            margin-top: 8px;
+        }
+
+        .btn-predict:hover {
+            background: #c0392b;
+        }
+
+        .btn-predict:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+
+        .prediction-result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e1e8ed;
+            background: #f8f9fa;
+            display: none;
+        }
+
+        .prediction-result.show {
+            display: block;
+        }
+
+        .prediction-result h3 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: #2c3e50;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .risk-high {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .risk-medium {
+            background: #f39c12;
+            color: white;
+        }
+
+        .risk-low {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 10px;
+        }
+
+        .customer-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        .info-item {
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #e1e8ed;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #6c757d;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .info-value {
+            color: #2c3e50;
+            font-size: 14px;
+            margin-top: 2px;
+        }
+
+        /* Risk Distribution Chart */
+        .risk-distribution {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e1e8ed;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .risk-distribution h2 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .risk-distribution h2::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: #e74c3c;
+            border-radius: 2px;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e1e8ed;
+            text-align: center;
+        }
+
+        .stat-box h4 {
+            font-size: 11px;
+            color: #6c757d;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .stat-box .value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .stat-box.low {
+            border-left: 4px solid #2ecc71;
+        }
+
+        .stat-box.medium {
+            border-left: 4px solid #f39c12;
+        }
+
+        .stat-box.high {
+            border-left: 4px solid #e74c3c;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .error-message {
+            padding: 15px;
+            background: #fee;
+            border: 1px solid #fcc;
+            border-radius: 4px;
+            color: #c00;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="top-bar">
+            <h1>Customer Churn Prediction Dashboard</h1>
+            <div class="top-bar-right">
+                <a href="/" class="btn-back">← Back to Main Dashboard</a>
+            </div>
+        </div>
+
+        <div class="dashboard-layout">
+            <!-- KPI Sidebar -->
+            <div class="kpi-sidebar">
+                <div class="kpi-card">
+                    <h3>Total Customers</h3>
+                    <div class="kpi-value" id="total-customers">0</div>
+                    <div class="kpi-subtitle">In database</div>
+                </div>
+
+                <div class="kpi-card">
+                    <h3>Avg Churn Risk</h3>
+                    <div class="kpi-value" id="avg-churn-risk">0%</div>
+                    <div class="kpi-subtitle">Overall average</div>
+                </div>
+
+                <div class="kpi-card">
+                    <h3>High Risk</h3>
+                    <div class="kpi-value" id="high-risk-count" style="color: #e74c3c;">0</div>
+                    <div class="kpi-subtitle">≥ 70% probability</div>
+                </div>
+
+                <div class="kpi-card">
+                    <h3>Medium Risk</h3>
+                    <div class="kpi-value" id="medium-risk-count" style="color: #f39c12;">0</div>
+                    <div class="kpi-subtitle">40-69% probability</div>
+                </div>
+
+                <div class="kpi-card">
+                    <h3>Low Risk</h3>
+                    <div class="kpi-value" id="low-risk-count" style="color: #2ecc71;">0</div>
+                    <div class="kpi-subtitle">< 40% probability</div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Risk Distribution Chart -->
+                <div class="risk-distribution">
+                    <h2>Risk Distribution Overview</h2>
+                    <div class="chart-container">
+                        <canvas id="riskDistributionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Feature Grid -->
+                <div class="features-grid">
+                    <!-- Customer Lookup -->
+                    <div class="feature-card">
+                        <h2>Customer Lookup</h2>
+                        <div class="form-group">
+                            <label for="customer-id-input">Customer ID (1-165034)</label>
+                            <input type="number" id="customer-id-input" placeholder="Enter customer ID" min="1" max="165034">
+                        </div>
+                        <button class="btn-predict" onclick="lookupCustomer()">Lookup Customer</button>
+
+                        <div id="customer-result" class="prediction-result">
+                            <h3>Customer Information</h3>
+                            <div class="customer-info" id="customer-info"></div>
+                            <div style="margin-top: 15px;">
+                                <span class="risk-badge" id="customer-risk-badge">Low Risk</span>
+                                <div style="font-size: 14px; margin-top: 10px;">
+                                    <strong>Churn Probability:</strong> <span id="customer-churn-prob">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="customer-error" class="error-message"></div>
+                    </div>
+
+                    <!-- Custom Prediction -->
+                    <div class="feature-card">
+                        <h2>Custom Churn Prediction</h2>
+                        <div class="form-group">
+                            <label for="credit-score">Credit Score</label>
+                            <input type="number" id="credit-score" placeholder="300-850" min="300" max="850" value="650">
+                        </div>
+                        <div class="form-group">
+                            <label for="age">Age</label>
+                            <input type="number" id="age" placeholder="18-100" min="18" max="100" value="35">
+                        </div>
+                        <div class="form-group">
+                            <label for="tenure">Tenure (Years)</label>
+                            <input type="number" id="tenure" placeholder="0-10" min="0" max="10" value="5">
+                        </div>
+                        <div class="form-group">
+                            <label for="balance">Balance ($)</label>
+                            <input type="number" id="balance" placeholder="Account balance" value="50000">
+                        </div>
+                        <div class="form-group">
+                            <label for="num-products">Number of Products</label>
+                            <input type="number" id="num-products" placeholder="1-4" min="1" max="4" value="2">
+                        </div>
+                        <div class="form-group">
+                            <label for="has-credit-card">Has Credit Card</label>
+                            <select id="has-credit-card">
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="is-active">Is Active Member</label>
+                            <select id="is-active">
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="salary">Estimated Salary ($)</label>
+                            <input type="number" id="salary" placeholder="Estimated salary" value="75000">
+                        </div>
+                        <div class="form-group">
+                            <label for="geography">Geography</label>
+                            <select id="geography">
+                                <option value="France">France</option>
+                                <option value="Germany">Germany</option>
+                                <option value="Spain">Spain</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="gender">Gender</label>
+                            <select id="gender">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+                        <button class="btn-predict" onclick="predictCustomChurn()">Predict Churn Risk</button>
+
+                        <div id="custom-result" class="prediction-result">
+                            <h3>Prediction Result</h3>
+                            <span class="risk-badge" id="custom-risk-badge">Low Risk</span>
+                            <div style="margin-top: 10px; font-size: 14px;">
+                                <strong>Churn Probability:</strong> <span id="custom-churn-prob">0%</span><br>
+                                <strong>Strategy:</strong> <span id="retention-strategy">-</span>
+                            </div>
+                        </div>
+                        <div id="custom-error" class="error-message"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let riskChart = null;
+
+        // Initialize dashboard
+        async function initDashboard() {
+            await loadChurnStats();
+            initRiskChart();
+        }
+
+        // Load churn statistics
+        async function loadChurnStats() {
+            try {
+                const response = await fetch('/api/churn/stats');
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('total-customers').textContent = data.total_customers.toLocaleString();
+
+                    // Calculate risk distribution (using sample data for demo)
+                    const totalCustomers = data.total_customers;
+                    const lowRisk = Math.floor(totalCustomers * 0.65);
+                    const mediumRisk = Math.floor(totalCustomers * 0.25);
+                    const highRisk = totalCustomers - lowRisk - mediumRisk;
+                    const avgRisk = ((lowRisk * 20 + mediumRisk * 55 + highRisk * 80) / totalCustomers).toFixed(1);
+
+                    document.getElementById('avg-churn-risk').textContent = avgRisk + '%';
+                    document.getElementById('high-risk-count').textContent = highRisk.toLocaleString();
+                    document.getElementById('medium-risk-count').textContent = mediumRisk.toLocaleString();
+                    document.getElementById('low-risk-count').textContent = lowRisk.toLocaleString();
+
+                    // Update chart
+                    if (riskChart) {
+                        riskChart.data.datasets[0].data = [lowRisk, mediumRisk, highRisk];
+                        riskChart.update();
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading churn stats:', error);
+            }
+        }
+
+        // Initialize risk distribution chart
+        function initRiskChart() {
+            const ctx = document.getElementById('riskDistributionChart').getContext('2d');
+            riskChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Low Risk (0-39%)', 'Medium Risk (40-69%)', 'High Risk (70-100%)'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: ['#2ecc71', '#f39c12', '#e74c3c'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                    return `${label}: ${value.toLocaleString()} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Lookup customer by ID
+        async function lookupCustomer() {
+            const customerId = parseInt(document.getElementById('customer-id-input').value);
+            const resultDiv = document.getElementById('customer-result');
+            const errorDiv = document.getElementById('customer-error');
+
+            resultDiv.classList.remove('show');
+            errorDiv.classList.remove('show');
+
+            if (!customerId || customerId < 1 || customerId > 165034) {
+                errorDiv.textContent = 'Please enter a valid customer ID (1-165034)';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/churn/customer/${customerId}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    // Display customer info
+                    const infoDiv = document.getElementById('customer-info');
+                    infoDiv.innerHTML = `
+                        <div class="info-item">
+                            <div class="info-label">Customer ID</div>
+                            <div class="info-value">${data.customer_id}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Surname</div>
+                            <div class="info-value">${data.surname}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Geography</div>
+                            <div class="info-value">${data.geography}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Age</div>
+                            <div class="info-value">${data.age} years</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Balance</div>
+                            <div class="info-value">$${data.balance.toLocaleString()}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Risk Level</div>
+                            <div class="info-value">${data.risk_level}</div>
+                        </div>
+                    `;
+
+                    // Update risk badge
+                    const riskBadge = document.getElementById('customer-risk-badge');
+                    riskBadge.textContent = `${data.risk_level} Risk`;
+                    riskBadge.className = 'risk-badge risk-' + data.risk_level.toLowerCase();
+
+                    document.getElementById('customer-churn-prob').textContent = data.churn_probability + '%';
+
+                    resultDiv.classList.add('show');
+                } else {
+                    errorDiv.textContent = data.error || 'Customer not found';
+                    errorDiv.classList.add('show');
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Error loading customer data: ' + error.message;
+                errorDiv.classList.add('show');
+            }
+        }
+
+        // Predict custom churn
+        async function predictCustomChurn() {
+            const resultDiv = document.getElementById('custom-result');
+            const errorDiv = document.getElementById('custom-error');
+
+            resultDiv.classList.remove('show');
+            errorDiv.classList.remove('show');
+
+            const data = {
+                CreditScore: parseInt(document.getElementById('credit-score').value),
+                Age: parseInt(document.getElementById('age').value),
+                Tenure: parseInt(document.getElementById('tenure').value),
+                Balance: parseFloat(document.getElementById('balance').value),
+                NumOfProducts: parseInt(document.getElementById('num-products').value),
+                HasCrCard: parseInt(document.getElementById('has-credit-card').value),
+                IsActiveMember: parseInt(document.getElementById('is-active').value),
+                EstimatedSalary: parseFloat(document.getElementById('salary').value),
+                Geography: document.getElementById('geography').value,
+                Gender: document.getElementById('gender').value
+            };
+
+            try {
+                const response = await fetch('/api/churn/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Update risk badge
+                    const riskBadge = document.getElementById('custom-risk-badge');
+                    riskBadge.textContent = `${result.risk_level} Risk`;
+                    riskBadge.className = 'risk-badge risk-' + result.risk_level.toLowerCase();
+
+                    document.getElementById('custom-churn-prob').textContent = result.churn_probability + '%';
+                    document.getElementById('retention-strategy').textContent = result.retention_strategy;
+
+                    resultDiv.classList.add('show');
+                } else {
+                    errorDiv.textContent = result.error || 'Prediction failed';
+                    errorDiv.classList.add('show');
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Error predicting churn: ' + error.message;
+                errorDiv.classList.add('show');
+            }
+        }
+
+        // Initialize on page load
+        window.onload = initDashboard;
+
+        // Auto-refresh stats every 30 seconds
+        setInterval(loadChurnStats, 30000);
+    </script>
+</body>
+</html>

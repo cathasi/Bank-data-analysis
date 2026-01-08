@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historical Trend Analysis Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .timestamp {
+            color: #999;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s;
+        }
+
+        .refresh-btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .metric-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .metric-subtext {
+            color: #999;
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quality-dimensions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .dimension-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .dimension-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .dimension-score {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .score-green {
+            color: #28a745;
+        }
+
+        .score-yellow {
+            color: #ffc107;
+        }
+
+        .score-red {
+            color: #dc3545;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-green {
+            background: #28a745;
+        }
+
+        .progress-yellow {
+            background: #ffc107;
+        }
+
+        .progress-red {
+            background: #dc3545;
+        }
+
+        .model-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        .model-metric {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid transparent;
+        }
+
+        .model-metric.pass {
+            border-left-color: #28a745;
+        }
+
+        .model-metric.fail {
+            border-left-color: #dc3545;
+        }
+
+        .model-metric-name {
+            color: #666;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .model-metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .model-metric-target {
+            color: #999;
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .status-pass {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .feature-name {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .feature-importance {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .anomaly-alert {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .anomaly-alert h3 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+
+        .anomaly-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #ffeaa7;
+            color: #856404;
+        }
+
+        .anomaly-item:last-child {
+            border-bottom: none;
+        }
+
+        .chart-container {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .chart-container img {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #dc3545;
+        }
+
+        .delta-positive {
+            color: #28a745;
+        }
+
+        .delta-negative {
+            color: #dc3545;
+        }
+
+        .trend-indicator {
+            display: inline-block;
+            margin-left: 8px;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📈 Historical Trend Analysis Dashboard</h1>
+            <p>Bank Term Deposit Quality Monitoring & Prediction</p>
+            <button class="refresh-btn" onclick="loadData()">🔄 Refresh Data</button>
+            <div class="timestamp" id="timestamp"></div>
+        </div>
+
+        <div id="dashboard"></div>
+    </div>
+
+    <script>
+        function loadData() {
+            const dashboard = document.getElementById('dashboard');
+            dashboard.innerHTML = '<div class="loading">Loading data...</div>';
+
+            fetch('trend_analysis_data.json')
+                .then(response => response.json())
+                .then(data => {
+                    renderDashboard(data);
+                })
+                .catch(error => {
+                    dashboard.innerHTML = `<div class="error"><strong>Error loading data:</strong> ${error.message}</div>`;
+                });
+        }
+
+        function getStatusClass(score) {
+            if (score >= 0.95) return 'green';
+            if (score >= 0.85) return 'yellow';
+            return 'red';
+        }
+
+        function renderDashboard(data) {
+            const dashboard = document.getElementById('dashboard');
+            const timestamp = document.getElementById('timestamp');
+            timestamp.textContent = `Last Updated: ${data.timestamp}`;
+
+            let html = '';
+
+            // Key Metrics Grid
+            html += `
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">Latest Completeness</div>
+                        <div class="metric-value">${(data.latest_metrics.completeness * 100).toFixed(2)}%</div>
+                        <div class="metric-subtext">Current quality score</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">7-Day Average</div>
+                        <div class="metric-value">${(data.latest_metrics.completeness_7d * 100).toFixed(2)}%</div>
+                        <div class="metric-subtext">Short-term trend</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">30-Day Average</div>
+                        <div class="metric-value">${(data.latest_metrics.completeness_30d * 100).toFixed(2)}%</div>
+                        <div class="metric-subtext">Medium-term trend</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">90-Day Average</div>
+                        <div class="metric-value">${(data.latest_metrics.completeness_90d * 100).toFixed(2)}%</div>
+                        <div class="metric-subtext">Long-term trend</div>
+                    </div>
+                </div>
+            `;
+
+            // Change Analysis
+            const deltaVsPrior = data.latest_metrics.delta_vs_prior;
+            const deltaVsBaseline = data.latest_metrics.delta_vs_baseline;
+            const priorClass = deltaVsPrior >= 0 ? 'delta-positive' : 'delta-negative';
+            const baselineClass = deltaVsBaseline >= 0 ? 'delta-positive' : 'delta-negative';
+            const priorArrow = deltaVsPrior >= 0 ? '📈' : '📉';
+            const baselineArrow = deltaVsBaseline >= 0 ? '📈' : '📉';
+
+            html += `
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">Change vs Prior Run</div>
+                        <div class="metric-value ${priorClass}">
+                            ${(deltaVsPrior * 100).toFixed(2)}%
+                            <span class="trend-indicator">${priorArrow}</span>
+                        </div>
+                        <div class="metric-subtext">Day-over-day change</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Change vs Baseline</div>
+                        <div class="metric-value ${baselineClass}">
+                            ${(deltaVsBaseline * 100).toFixed(2)}%
+                            <span class="trend-indicator">${baselineArrow}</span>
+                        </div>
+                        <div class="metric-subtext">Cumulative improvement</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Anomalies Detected</div>
+                        <div class="metric-value" style="color: ${data.latest_metrics.total_anomalies > 0 ? '#dc3545' : '#28a745'}">
+                            ${data.latest_metrics.total_anomalies}
+                        </div>
+                        <div class="metric-subtext">Out of ${data.trend_history.length} runs</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Dataset Size</div>
+                        <div class="metric-value">${data.dataset_info.total_records.toLocaleString()}</div>
+                        <div class="metric-subtext">Total records</div>
+                    </div>
+                </div>
+            `;
+
+            // Anomaly Alerts
+            if (data.anomalies && data.anomalies.length > 0) {
+                html += `
+                    <div class="section">
+                        <div class="anomaly-alert">
+                            <h3>⚠️ Quality Anomalies Detected (${data.anomalies.length} incidents)</h3>
+                `;
+                data.anomalies.forEach(anomaly => {
+                    html += `
+                        <div class="anomaly-item">
+                            <strong>${anomaly.date}:</strong> Completeness dropped to ${(anomaly.completeness * 100).toFixed(2)}% 
+                            (${(anomaly.delta * 100).toFixed(2)}% from baseline)
+                        </div>
+                    `;
+                });
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Quality Dimensions
+            html += `
+                <div class="section">
+                    <div class="section-title">📊 Quality Dimensions (Latest Run: ${data.latest_metrics.run_date})</div>
+                    <div class="quality-dimensions">
+            `;
+
+            const dimensions = {
+                'Completeness': data.quality_dimensions.completeness,
+                'Uniqueness': data.quality_dimensions.uniqueness,
+                'Accuracy (Age)': data.quality_dimensions.accuracy_age,
+                'Accuracy (Balance)': data.quality_dimensions.accuracy_balance,
+                'Consistency (Contact)': data.quality_dimensions.consistency_contact
+            };
+
+            for (const [name, score] of Object.entries(dimensions)) {
+                const statusClass = getStatusClass(score);
+                const progressClass = `progress-${statusClass}`;
+                html += `
+                    <div class="dimension-card">
+                        <div class="dimension-label">${name}</div>
+                        <div class="dimension-score score-${statusClass}">${(score * 100).toFixed(2)}%</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill ${progressClass}" style="width: ${score * 100}%"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            // Model Performance
+            html += `
+                <div class="section">
+                    <div class="section-title">🤖 ML Model Performance (XGBoost Classifier)</div>
+                    <div class="model-metrics">
+            `;
+
+            const modelMetrics = {
+                'Accuracy': data.model_performance.accuracy,
+                'Precision': data.model_performance.precision,
+                'Recall': data.model_performance.recall,
+                'F1-Score': data.model_performance.f1_score,
+                'AUC-ROC': data.model_performance.auc_roc
+            };
+
+            for (const [name, metric] of Object.entries(modelMetrics)) {
+                const statusClass = metric.status === 'PASS' ? 'pass' : 'fail';
+                const badgeClass = metric.status === 'PASS' ? 'status-pass' : 'status-fail';
+                html += `
+                    <div class="model-metric ${statusClass}">
+                        <div class="model-metric-name">${name}</div>
+                        <div class="model-metric-value">${(metric.value * 100).toFixed(2)}%</div>
+                        <div class="model-metric-target">Target: ${(metric.target * 100).toFixed(0)}%</div>
+                        <div class="status-badge ${badgeClass}">${metric.status}</div>
+                    </div>
+                `;
+            }
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            // Feature Importance
+            html += `
+                <div class="section">
+                    <div class="section-title">🎯 Top 10 Feature Importance</div>
+                    <ul class="feature-list">
+            `;
+
+            data.feature_importance.forEach((feature, index) => {
+                html += `
+                    <li class="feature-item">
+                        <span class="feature-name">#${index + 1} ${feature.feature}</span>
+                        <span class="feature-importance">${(feature.importance * 100).toFixed(2)}%</span>
+                    </li>
+                `;
+            });
+
+            html += `
+                    </ul>
+                </div>
+            `;
+
+            // Visualization Chart
+            html += `
+                <div class="section">
+                    <div class="section-title">📉 Trend Visualization</div>
+                    <div class="chart-container">
+                        <img src="historical_trend_analysis.png?${Date.now()}" alt="Historical Trend Analysis Chart">
+                    </div>
+                </div>
+            `;
+
+            dashboard.innerHTML = html;
+        }
+
+        // Load data on page load
+        window.onload = loadData;
+    </script>
+</body>
+</html>

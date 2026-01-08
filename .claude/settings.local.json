@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python app_simple.py:*)",
+      "Bash(pip install:*)",
+      "Bash(.venv/Scripts/python.exe:*)",
+      "Bash(venv/Scripts/python.exe:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(powershell -Command \"(Get-Content ''D:\\Download\\hjp-fraud-detection\\templates\\fraud_dashboard.html'').Count\")",
+      "Bash(move \"D:\\Download\\hjp-fraud-detection\\templates\\fraud_dashboard.html\" \"D:\\Download\\hjp-fraud-detection\\templates\\fraud_detection.html\")",
+      "Bash(powershell -Command:*)",
+      "Bash(timeout 3 tail:*)",
+      "Bash(timeout 5 tail:*)",
+      "Bash(venv/bin/python:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

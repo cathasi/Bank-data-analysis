@@ -1,0 +1,21 @@
+# Large files
+*.zip
+*.pkl
+churn_test.csv
+credit_test.csv
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.idea/
+
+# OS
+.DS_Store
+Thumbs.dbReport*.pdf 
+fraud_test.csv 
+Credit_Scoring/data/*.csv 
+trend_analysis/train.csv 
+*.joblib 
+*.db 
+quality_check/*.csv 
