@@ -1,6 +1,6 @@
 from flask import Flask, render_template, jsonify, request, send_file
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import pickle
 import smtplib
 from email.mime.text import MIMEText
@@ -213,7 +213,7 @@ except Exception as e:
 # Database Model (RTFD-2.2)
 class FraudAlert(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     transaction_id = db.Column(db.String(50), unique=True, nullable=False)
     fraud_score = db.Column(db.Float, nullable=False)
     amount = db.Column(db.Float, nullable=False)
@@ -322,7 +322,34 @@ def generate_fraud_alert(transaction_id, features, amount):
     else:
         risk_level = 'Low'
 
-    # Create alert in database
+    # Upsert: if an alert for this transaction_id already exists, update it
+    existing = FraudAlert.query.filter_by(transaction_id=transaction_id).first()
+    if existing:
+        existing.timestamp = datetime.now(timezone.utc)
+        existing.fraud_score = fraud_prob
+        existing.amount = amount
+        existing.risk_level = risk_level
+        for i in range(28):
+            setattr(existing, f'v{i+1}', features[i])
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f"[ERROR] Updating existing alert failed: {e}")
+
+        # Send email for high-risk cases (if not already sent)
+        if risk_level == 'High' and not existing.email_sent:
+            email_sent = send_email_alert(transaction_id, fraud_prob, amount, risk_level)
+            if email_sent:
+                existing.email_sent = True
+                try:
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+
+        return existing
+
+    # Create new alert in database
     alert = FraudAlert(
         transaction_id=transaction_id,
         fraud_score=fraud_prob,
@@ -332,14 +359,22 @@ def generate_fraud_alert(transaction_id, features, amount):
     )
 
     db.session.add(alert)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ERROR] Creating alert failed: {e}")
+        raise
 
     # Send email for high-risk cases
     if risk_level == 'High' and not alert.email_sent:
         email_sent = send_email_alert(transaction_id, fraud_prob, amount, risk_level)
         if email_sent:
             alert.email_sent = True
-            db.session.commit()
+            try:
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
 
     return alert
 
@@ -373,20 +408,66 @@ def predict_churn_probability(customer_data):
     """Predict churn probability for a customer"""
     if CHURN_MODEL_LOADED:
         try:
-            # Prepare features in the correct order
-            features = [
-                float(customer_data['CreditScore']),
-                float(customer_data['Age']),
-                int(customer_data['Tenure']),
-                float(customer_data['Balance']),
-                int(customer_data['NumOfProducts']),
-                float(customer_data['HasCrCard']),
-                float(customer_data['IsActiveMember']),
-                float(customer_data['EstimatedSalary']),
-                1.0 if customer_data['Geography'] == 'Germany' else 0.0,
-                1.0 if customer_data['Geography'] == 'Spain' else 0.0,
-                1.0 if customer_data['Gender'] == 'Male' else 0.0
-            ]
+            # Prepare features in the correct order. If the model exposes
+            # `feature_names_in_`, construct the vector accordingly (handles
+            # one-hot encoded geography/gender/flags). Otherwise, fall back
+            # to the legacy compact vector.
+            if hasattr(churn_model, 'feature_names_in_'):
+                feature_names = list(churn_model.feature_names_in_)
+                features = []
+                for fname in feature_names:
+                    if fname in ('CreditScore', 'Age', 'Tenure', 'Balance', 'EstimatedSalary'):
+                        try:
+                            features.append(float(customer_data.get(fname, 0)))
+                        except Exception:
+                            features.append(0.0)
+                    elif fname.startswith('Geography_'):
+                        val = customer_data.get('Geography', '')
+                        target = fname.split('_', 1)[1]
+                        features.append(1.0 if str(val) == target else 0.0)
+                    elif fname.startswith('Gender_'):
+                        val = customer_data.get('Gender', '')
+                        target = fname.split('_', 1)[1]
+                        features.append(1.0 if str(val) == target else 0.0)
+                    elif fname.startswith('IsActiveMember_'):
+                        try:
+                            val = float(customer_data.get('IsActiveMember', 0))
+                            target = float(fname.split('_', 1)[1])
+                            features.append(1.0 if val == target else 0.0)
+                        except Exception:
+                            features.append(0.0)
+                    elif fname.startswith('HasCrCard_'):
+                        try:
+                            val = float(customer_data.get('HasCrCard', 0))
+                            target = float(fname.split('_', 1)[1])
+                            features.append(1.0 if val == target else 0.0)
+                        except Exception:
+                            features.append(0.0)
+                    elif fname.startswith('NumOfProducts_'):
+                        try:
+                            val = int(customer_data.get('NumOfProducts', 0))
+                            target = int(fname.split('_', 1)[1])
+                            features.append(1.0 if val == target else 0.0)
+                        except Exception:
+                            features.append(0.0)
+                    else:
+                        # Unknown feature name, default to 0.0
+                        features.append(0.0)
+            else:
+                # Legacy compact feature vector (backwards compatibility)
+                features = [
+                    float(customer_data.get('CreditScore', 0)),
+                    float(customer_data.get('Age', 0)),
+                    int(customer_data.get('Tenure', 0)),
+                    float(customer_data.get('Balance', 0)),
+                    int(customer_data.get('NumOfProducts', 0)),
+                    float(customer_data.get('HasCrCard', 0)),
+                    float(customer_data.get('IsActiveMember', 0)),
+                    float(customer_data.get('EstimatedSalary', 0)),
+                    1.0 if customer_data.get('Geography') == 'Germany' else 0.0,
+                    1.0 if customer_data.get('Geography') == 'Spain' else 0.0,
+                    1.0 if customer_data.get('Gender') == 'Male' else 0.0
+                ]
 
             # Predict using loaded model
             churn_prob = churn_model.predict_proba([features])[0][1]
@@ -633,7 +714,7 @@ def index():
 def get_statistics():
     """Get real-time fraud detection statistics"""
     # Total transactions (last 24 hours)
-    last_24h = datetime.utcnow() - timedelta(hours=24)
+    last_24h = datetime.now(timezone.utc) - timedelta(hours=24)
     total_transactions = FraudAlert.query.filter(FraudAlert.timestamp >= last_24h).count()
 
     # Fraud alerts by risk level
@@ -659,7 +740,7 @@ def get_statistics():
     # Get trend data (last 7 days)
     trend_data = []
     for i in range(7):
-        date = datetime.utcnow() - timedelta(days=6-i)
+        date = datetime.now(timezone.utc) - timedelta(days=6-i)
         day_start = date.replace(hour=0, minute=0, second=0, microsecond=0)
         day_end = day_start + timedelta(days=1)
 
@@ -952,12 +1033,12 @@ def get_customer_by_id(customer_id):
     return jsonify({
         'success': True,
         'customer_id': customer['CustomerId'],
-        'id': customer['id'],
+        'id': int(customer['id']),
         'surname': customer['Surname'],
         'geography': customer['Geography'],
-        'age': customer['Age'],
-        'balance': customer['Balance'],
-        'churn_probability': round(churn_prob * 100, 2),
+        'age': int(customer['Age']) if customer.get('Age') is not None else None,
+        'balance': float(customer['Balance']) if customer.get('Balance') is not None else None,
+        'churn_probability': float(round(churn_prob * 100, 2)),
         'risk_level': risk_level
     })
 
