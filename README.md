@@ -75,17 +75,3 @@ Quality & Trend
 - `Credit_Scoring/models/` — place `credit_score_regressor.joblib`, `credit_score_classifier.joblib`, and `preprocessing_artifacts.json` here
 - Optional: `fraud_detection_model.pkl`, `scaler.pkl`, `churn_xgboost_model.pkl` will be loaded if present
 
-## Missing models behavior
-If model files are missing the app will use built-in simulated scoring to keep the UI and APIs functional.
-
-## Contributing & next steps
-- Add endpoints or integrations via PR/issue
-- Consider adding `Dockerfile` and docker-compose for deployment
-
-## License
-MIT
-
----
-
-If you want, I can add example request/response payloads for key endpoints, create a `Dockerfile`, or keep both Vietnamese and English README versions.
-
